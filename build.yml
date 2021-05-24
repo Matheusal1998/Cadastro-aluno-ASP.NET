@@ -1,0 +1,47 @@
+nome: Build
+sobre:
+  Empurre:
+    galhos:
+      - mestre
+  pull_request:
+    tipos: [aberto, sincronizado, reaberto]
+empregos:
+  construir:
+    nome: Build
+    roda em: windows-mais recente
+    degraus:
+      - nome: Configurar JDK 11
+        usa: actions / setup-java @ v1
+        com:
+          versão java: 1.11
+      - usa: ações / checkout @ v2
+        com:
+          fetch-depth: 0 # Clones rasos devem ser desabilitados para uma melhor relevância da análise
+      - nome: pacotes de cache do SonarCloud
+        usa: ações / cache @ v1
+        com:
+          caminho: ~ \ sonar \ cache
+          chave: $ {{runner.os}} - sonar
+          chaves de restauração: $ {{runner.os}} - sonar
+      - nome: scanner de cache SonarCloud
+        id: cache-sonar-scanner
+        usa: ações / cache @ v1
+        com:
+          caminho:. \. sonar \ scanner
+          chave: $ {{runner.os}} - scanner de sonar
+          chaves de restauração: $ {{runner.os}} - scanner de sonar
+      - nome: Instale o scanner SonarCloud
+        if: steps.cache-sonar-scanner.outputs.cache-hit! = 'true'
+        shell: powershell
+        correr: |
+          New-Item -Path. \. Sonar \ scanner -ItemType Directory
+          atualização da ferramenta dotnet dotnet-sonarscanner --tool-path. \. sonar \ scanner
+      - nome: construir e analisar
+        env:
+          GITHUB_TOKEN: $ {{secrets.GITHUB_TOKEN}} # Necessário para obter informações de RP, se houver
+          SONAR_TOKEN: $ {{secrets.SONAR_TOKEN}}
+        shell: powershell
+        correr: |
+          . \. sonar \ scanner \ dotnet-sonarscanner begin /k:"Matheusal1998_Cadastro-aluno-ASP.NET "/ o:" matheusal1998 "/d:sonar.login =" $ {{secrets.SONAR_TOKEN}} "/ d: sonar .host.url = "https://sonarcloud.io"
+          <your clean build command> 
+          . \. sonar \ scanner \ dotnet-sonarscanner end /d:sonar.login = "$ {{secrets.SONAR_TOKEN}}"
